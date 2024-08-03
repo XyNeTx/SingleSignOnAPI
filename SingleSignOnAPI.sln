@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34723.18
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SingleSignOnAPI", "SingleSignOnAPI\SingleSignOnAPI.csproj", "{BFB84D93-7E72-401C-81A6-0BBD282727E6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BFB84D93-7E72-401C-81A6-0BBD282727E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BFB84D93-7E72-401C-81A6-0BBD282727E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BFB84D93-7E72-401C-81A6-0BBD282727E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BFB84D93-7E72-401C-81A6-0BBD282727E6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5CB017A0-D95C-4FFB-A7C2-17588E22870C}
+	EndGlobalSection
+EndGlobal
