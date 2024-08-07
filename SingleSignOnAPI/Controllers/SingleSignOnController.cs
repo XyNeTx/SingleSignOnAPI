@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using SingleSignOnAPI.AppDbContext;
 using System.Security.Claims;
 //using System.Web.Http.Cors;
 
@@ -12,10 +13,12 @@ namespace SingleSignOnAPI.Controllers
     {
 
         private readonly ActiveDirectoryHelper _activeDirectoryHelper;
+        private readonly WorkFlowContext _flowContext;
 
-        public SingleSignOnController(ActiveDirectoryHelper activeDirectoryHelper)
+        public SingleSignOnController(ActiveDirectoryHelper activeDirectoryHelper,WorkFlowContext flowContext)
         {
             _activeDirectoryHelper = activeDirectoryHelper;
+            _flowContext = flowContext;
         }
 
         [HttpGet]
@@ -31,13 +34,27 @@ namespace SingleSignOnAPI.Controllers
 
             var ComputerName = _activeDirectoryHelper.GetHostNameByIp().Split(".")[0];
             var FullComputerName = _activeDirectoryHelper.GetHostNameByIp();
+            var UserDetail = _flowContext.Employee.Where(x => x.EmployeeCode == UserName)
+                .Select(x => new
+                {
+                    x.EmployeeCode,
+                    x.DepartmentCode,
+                    x.Company,
+                    Title = x.Title == "นาย" ? "Mr." : x.Title == "นาง" ? "Mrs." : "Miss.",
+                    x.Name,
+                    x.Surname,
+                    x.Email,
+                    x.LocationCode
+                }).FirstOrDefault();
+
 
             var response = new
             {
                 UserName,
                 DomainName,
                 ComputerName,
-                FullComputerName
+                FullComputerName,
+                UserDetail
             };
 
             return Ok(response);
