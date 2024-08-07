@@ -19,20 +19,25 @@ namespace SingleSignOnAPI.Controllers
         }
 
         [HttpGet]
-        public ActionResult<string> getLogin()
+        public IActionResult getLogin()
         {
             var UserName = User.FindFirst(ClaimTypes.Name)?.Value.ToString().Split("\\")[1];
+            var DomainName = User.FindFirst(ClaimTypes.Name)?.Value.ToString().Split("\\")[0];
+
             if (string.IsNullOrEmpty(UserName))
             {
-                return Ok("Unauthorize");
+                return Unauthorized();
             }
 
             var ComputerName = _activeDirectoryHelper.GetHostNameByIp().Split(".")[0];
+            var FullComputerName = _activeDirectoryHelper.GetHostNameByIp();
 
             var response = new
             {
                 UserName,
-                ComputerName
+                DomainName,
+                ComputerName,
+                FullComputerName
             };
 
             return Ok(response);
