@@ -46,13 +46,13 @@ namespace SingleSignOnAPI
             }
         }
 
-        public async Task AddUsesToTSql(string employeeCode, string computerName, string ipAddress)
+        public async Task<T_SQL_License> AddUsesToTSql(string employeeCode, string computerName, string ipAddress)
         {
             try
             {
                 T_SQL_License addObj = new T_SQL_License
                 {
-                    F_System_Name = _httpContextAccessor.HttpContext.Request.Path.Value,
+                    F_System_Name = _httpContextAccessor.HttpContext.Request.Headers["X-System-Name"].FirstOrDefault(),
                     F_UserID = employeeCode,
                     F_Host_Client = computerName,
                     F_IPAddress = ipAddress,
@@ -62,9 +62,12 @@ namespace SingleSignOnAPI
                 _tSQL.T_SQL_License.Add(addObj);
                 await _tSQL.SaveChangesAsync();
 
+                return addObj;
+
             }
             catch (Exception ex)
             {
+                return null;
                 throw;
             }
         }

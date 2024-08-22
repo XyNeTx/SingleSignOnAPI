@@ -29,7 +29,7 @@ namespace SingleSignOnAPI.Controllers
         {
             try
             {
-                var UserName = User.FindFirst(ClaimTypes.Name)?.Value.ToString().Split("\\")[1] == null ? "20234111" : User.FindFirst(ClaimTypes.Name)?.Value.ToString().Split("\\")[1];
+                var UserName = User.FindFirst(ClaimTypes.Name)?.Value.ToString().Split("\\")[1];
                 var DomainName = User.FindFirst(ClaimTypes.Name)?.Value.ToString().Split("\\")[0];
                 if (string.IsNullOrEmpty(UserName))
                 {
@@ -52,19 +52,18 @@ namespace SingleSignOnAPI.Controllers
                         x.LocationCode
                     }).FirstOrDefault();
 
-                await _activeDirectoryHelper.AddUsesToTSql(UserName, ComputerName, ipAddress.ToString());
+                var addObj = await _activeDirectoryHelper.AddUsesToTSql(UserName, ComputerName, ipAddress.ToString());
 
-                var response = new
+                return Ok(new
                 {
                     UserName,
                     DomainName,
                     ComputerName,
                     FullComputerName,
-                    ipAddress,
+                    IpAddress = ipAddress.ToString(),
                     UserDetail,
-                };
-
-                return Ok(response);
+                    addObj
+                });
             }
             catch (Exception ex)
             {
