@@ -20,13 +20,18 @@ builder.Services.AddCors(options =>
                                         "http://hmmt-app07",
                                         "http://hmmt-app05",
                                         "http://hmmt-app03") // Replace with your client's origin
-                                        .AllowAnyMethod()
-                                        .AllowAnyHeader()
-                                        .AllowCredentials());
+                          .AllowAnyMethod()
+                          .AllowAnyHeader()
+                          .AllowCredentials());
 });
+
 builder.Services.AddDbContext<WorkFlowContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+builder.Services.AddDbContext<TSQLContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("TSQLConnection"));
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -35,6 +40,9 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ActiveDirectoryHelper>();
 
 var app = builder.Build();
+
+// Ensure CORS is configured before Authentication and Authorization
+app.UseCors("AllowSpecificOrigin");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -47,9 +55,6 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 });
-
-// Ensure CORS is configured before Authentication and Authorization
-app.UseCors("AllowSpecificOrigin");
 
 app.UseHttpsRedirection();
 
