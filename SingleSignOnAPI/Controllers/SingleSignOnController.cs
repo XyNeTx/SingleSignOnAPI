@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using SingleSignOnAPI.AppDbContext;
-using System.Net;
 using System.Security.Claims;
 //using System.Web.Http.Cors;
 
@@ -15,30 +14,30 @@ namespace SingleSignOnAPI.Controllers
 
         private readonly ActiveDirectoryHelper _activeDirectoryHelper;
         private readonly WorkFlowContext _flowContext;
-        private readonly TSQLContext _tSQL;
 
-        public SingleSignOnController(ActiveDirectoryHelper activeDirectoryHelper,WorkFlowContext flowContext, TSQLContext tSQL)
+        public SingleSignOnController(ActiveDirectoryHelper activeDirectoryHelper,WorkFlowContext flowContext)
         {
             _activeDirectoryHelper = activeDirectoryHelper;
             _flowContext = flowContext;
-            _tSQL = tSQL;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetLogin()
+        public async Task<IActionResult> GetLogin(string system_name)
         {
+            var UserName = User.FindFirst(ClaimTypes.Name)?.Value.ToString().Split("\\")[1];
+            var DomainName = User.FindFirst(ClaimTypes.Name)?.Value.ToString().Split("\\")[0];
+            if (string.IsNullOrEmpty(UserName) || string.IsNullOrEmpty(DomainName))
+            {
+                _activeDirectoryHelper.LogError(UserName, _activeDirectoryHelper.GetHostNameByIp().Split(".")[0], _activeDirectoryHelper.GetIpAddress().ToString(), system_name, "Unauthorized");
+                return Unauthorized();
+            }
+
+            var ComputerName = _activeDirectoryHelper.GetHostNameByIp().Split(".")[0];
+            var FullComputerName = _activeDirectoryHelper.GetHostNameByIp();
+            var ipAddress = _activeDirectoryHelper.GetIpAddress();
+
             try
             {
-                var UserName = User.FindFirst(ClaimTypes.Name)?.Value.ToString().Split("\\")[1];
-                var DomainName = User.FindFirst(ClaimTypes.Name)?.Value.ToString().Split("\\")[0];
-                if (string.IsNullOrEmpty(UserName))
-                {
-                    return Unauthorized();
-                }
-
-                var ComputerName = _activeDirectoryHelper.GetHostNameByIp().Split(".")[0];
-                var FullComputerName = _activeDirectoryHelper.GetHostNameByIp();
-                var ipAddress = _activeDirectoryHelper.GetIpAddress();
                 var UserDetail = _flowContext.Employee.Where(x => x.EmployeeCode == UserName)
                     .Select(x => new
                     {
@@ -52,7 +51,7 @@ namespace SingleSignOnAPI.Controllers
                         x.LocationCode
                     }).FirstOrDefault();
 
-                var addObj = await _activeDirectoryHelper.AddUsesToTSql(UserName, ComputerName, ipAddress.ToString());
+                var addObj = await _activeDirectoryHelper.AddUsesToTSql(UserName, ComputerName, ipAddress.ToString(), system_name);
 
                 return Ok(new
                 {
@@ -67,14 +66,9 @@ namespace SingleSignOnAPI.Controllers
             }
             catch (Exception ex)
             {
+                _activeDirectoryHelper.LogError(UserName, ComputerName, ipAddress.ToString(),system_name, ex.Message);
                 return StatusCode(500, ex.Message);
             }
-        }
-
-        [HttpGet]
-        public IActionResult TestApi()
-        {
-            return Ok("Test API");
         }
     }
 }

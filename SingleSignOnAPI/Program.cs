@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Server.IISIntegration;
 using SingleSignOnAPI;
 using SingleSignOnAPI.AppDbContext;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +34,9 @@ builder.Services.AddDbContext<TSQLContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("TSQLConnection"));
 });
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration).CreateLogger();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
