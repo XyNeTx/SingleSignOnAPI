@@ -6,12 +6,13 @@ using SingleSignOnAPI;
 using SingleSignOnAPI.AppDbContext;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using Microsoft.AspNetCore.Authentication.Negotiate;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddAuthentication(IISDefaults.AuthenticationScheme);
+builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme).AddNegotiate();
 
 builder.Services.AddCors(options =>
 {
@@ -20,7 +21,8 @@ builder.Services.AddCors(options =>
                                         "http://hmmta-tpcap",
                                         "http://hmmt-app07",
                                         "http://hmmt-app05",
-                                        "http://hmmt-app03") // Replace with your client's origin
+                                        "http://hmmt-app03",
+                                        "https://hinommt.com") // Replace with your client's origin
                           .AllowAnyMethod()
                           .AllowAnyHeader()
                           .AllowCredentials());

@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Cors;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Server.IISIntegration;
 using SingleSignOnAPI.AppDbContext;
 using System.Security.Claims;
 //using System.Web.Http.Cors;
@@ -9,6 +11,7 @@ namespace SingleSignOnAPI.Controllers
     [Route("api/[controller]/[action]")]
     [ApiController]
     [EnableCors("AllowSpecificOrigin")]
+    [Authorize]
     public class SingleSignOnController : ControllerBase
     {
 
@@ -28,13 +31,16 @@ namespace SingleSignOnAPI.Controllers
             var DomainName = User.FindFirst(ClaimTypes.Name)?.Value.ToString().Split("\\")[0];
             if (string.IsNullOrEmpty(UserName) || string.IsNullOrEmpty(DomainName))
             {
-                _activeDirectoryHelper.LogError(UserName, _activeDirectoryHelper.GetHostNameByIp().Split(".")[0], _activeDirectoryHelper.GetIpAddress().ToString(), system_name, "Unauthorized");
+                _activeDirectoryHelper.LogError
+                    (UserName, _activeDirectoryHelper.GetHostNameByIp(system_name,UserName).Split(".")[0]
+                    , _activeDirectoryHelper.GetIpAddress(system_name, UserName).ToString(), system_name, "Unauthorized");
+
                 return Unauthorized();
             }
 
-            var ComputerName = _activeDirectoryHelper.GetHostNameByIp().Split(".")[0];
-            var FullComputerName = _activeDirectoryHelper.GetHostNameByIp();
-            var ipAddress = _activeDirectoryHelper.GetIpAddress();
+            var ipAddress = _activeDirectoryHelper.GetIpAddress(system_name, UserName);
+            var ComputerName = _activeDirectoryHelper.GetHostNameByIp(system_name, UserName).Split(".")[0];
+            var FullComputerName = _activeDirectoryHelper.GetHostNameByIp(system_name, UserName);
 
             try
             {
@@ -67,7 +73,12 @@ namespace SingleSignOnAPI.Controllers
             catch (Exception ex)
             {
                 _activeDirectoryHelper.LogError(UserName, ComputerName, ipAddress.ToString(),system_name, ex.Message);
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new
+                {
+                    status = "500",
+                    response = "Internal Server Error",
+                    message = ex.Message
+                });
             }
         }
     }

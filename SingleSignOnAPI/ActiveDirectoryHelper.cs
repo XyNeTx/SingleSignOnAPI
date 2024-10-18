@@ -20,32 +20,38 @@ namespace SingleSignOnAPI
             _tSQL = tSQL;
         }
         
-        public string GetHostNameByIp()
+        public string GetHostNameByIp(string SystemName, string EmployeeCode)
         {
+
+            string hostName = "";
+            IPAddress ipAddress = new IPAddress(0);
             try
             {
                 var _xForward = _httpContextAccessor.HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault() ?? _httpContextAccessor.HttpContext.Connection.RemoteIpAddress?.ToString();
-                IPAddress ipAddress = IPAddress.Parse(_xForward);
-                string hostName = Dns.GetHostEntry(ipAddress).HostName;
+                ipAddress = IPAddress.Parse(_xForward);
+                hostName = Dns.GetHostEntry(ipAddress).HostName;
                 return hostName;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return null;
+                Log.Error($"Error: {ex.Message} | SystemName : {SystemName} | EmployeeCode : {EmployeeCode} | IPAddress : {ipAddress}");
+                throw new Exception("Error: " + ex.Message);
             }
         }
 
-        public IPAddress GetIpAddress()
+        public IPAddress GetIpAddress(string SystemName, string EmployeeCode)
         {
+            string stringIP = "";
             try
             {
                 var _xForward = _httpContextAccessor.HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault() ?? _httpContextAccessor.HttpContext.Connection.RemoteIpAddress?.ToString();
                 IPAddress ipAddress = IPAddress.Parse(_xForward);
                 return ipAddress;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return null;
+                Log.Error($"Error: {ex.Message} | SystemName : {SystemName} | EmployeeCode : {EmployeeCode} | IpAddress: {stringIP}");
+                throw new Exception("Error: " + ex.Message);
             }
         }
 
@@ -71,8 +77,8 @@ namespace SingleSignOnAPI
             }
             catch (Exception ex)
             {
-                return null;
-                throw;
+                Log.Error($"Error: {ex.Message} | EmployeeCode: {employeeCode} | ComputerName: {computerName} | IpAddress: {ipAddress} | SystemName: {system_name}");
+                throw new Exception("Error: " + ex.Message);
             }
         }
 
