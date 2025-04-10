@@ -1,5 +1,5 @@
-﻿using Azure.Core;
-using Microsoft.AspNetCore.Cors;
+﻿using Microsoft.AspNetCore.Cors;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Serilog;
 using SingleSignOnAPI.AppDbContext;
@@ -14,12 +14,12 @@ namespace SingleSignOnAPI
         private readonly TSQLContext _tSQL;
 
 
-        public ActiveDirectoryHelper(IHttpContextAccessor httpContextAccessor,TSQLContext tSQL)
+        public ActiveDirectoryHelper(IHttpContextAccessor httpContextAccessor, TSQLContext tSQL)
         {
             _httpContextAccessor = httpContextAccessor;
             _tSQL = tSQL;
         }
-        
+
         public string GetHostNameByIp(string SystemName, string EmployeeCode)
         {
 
@@ -55,7 +55,7 @@ namespace SingleSignOnAPI
             }
         }
 
-        public async Task<T_SQL_License> AddUsesToTSql(string employeeCode, string computerName, string ipAddress,string system_name)
+        public async Task<T_SQL_License> AddUsesToTSql(string employeeCode, string computerName, string ipAddress, string system_name)
         {
             try
             {
@@ -68,11 +68,26 @@ namespace SingleSignOnAPI
                     F_Update = DateTime.Now
                 };
 
-                _tSQL.T_SQL_License.Add(addObj);
-                Log.Information($"Status : OK | Add User To T-Sql : {JsonConvert.SerializeObject(addObj)}");
-                await _tSQL.SaveChangesAsync();
+                var isExist = await _tSQL.T_SQL_License.AsNoTracking()
+                    .AnyAsync(x => x.F_UserID == employeeCode
+                    && x.F_Host_Client == computerName
+                    && x.F_System_Name == system_name
+                    && x.F_Update.Date == addObj.F_Update.Date);
 
-                return addObj;
+                if (isExist)
+                {
+                    Log.Information($"Status : OK | User Already Exist : {JsonConvert.SerializeObject(addObj)}");
+                    return addObj;
+                }
+                else
+                {
+
+                    _tSQL.T_SQL_License.Add(addObj);
+                    Log.Information($"Status : OK | Add User To T-Sql : {JsonConvert.SerializeObject(addObj)}");
+                    await _tSQL.SaveChangesAsync();
+
+                    return addObj;
+                }
 
             }
             catch (Exception ex)
@@ -82,7 +97,7 @@ namespace SingleSignOnAPI
             }
         }
 
-        public void LogError(string? employeeCode, string? computerName, string? ipAddress, string? system_name,string? message)
+        public void LogError(string? employeeCode, string? computerName, string? ipAddress, string? system_name, string? message)
         {
             Log.Error($"Error: {message} | EmployeeCode: {employeeCode} | ComputerName: {computerName} | IpAddress: {ipAddress} | SystemName: {system_name}");
         }

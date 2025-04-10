@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Server.IISIntegration;
+using Serilog;
 using SingleSignOnAPI.AppDbContext;
 using System.Security.Claims;
 //using System.Web.Http.Cors;
@@ -18,7 +18,7 @@ namespace SingleSignOnAPI.Controllers
         private readonly ActiveDirectoryHelper _activeDirectoryHelper;
         private readonly WorkFlowContext _flowContext;
 
-        public SingleSignOnController(ActiveDirectoryHelper activeDirectoryHelper,WorkFlowContext flowContext)
+        public SingleSignOnController(ActiveDirectoryHelper activeDirectoryHelper, WorkFlowContext flowContext)
         {
             _activeDirectoryHelper = activeDirectoryHelper;
             _flowContext = flowContext;
@@ -32,7 +32,7 @@ namespace SingleSignOnAPI.Controllers
             if (string.IsNullOrEmpty(UserName) || string.IsNullOrEmpty(DomainName))
             {
                 _activeDirectoryHelper.LogError
-                    (UserName, _activeDirectoryHelper.GetHostNameByIp(system_name,UserName).Split(".")[0]
+                    (UserName, _activeDirectoryHelper.GetHostNameByIp(system_name, UserName).Split(".")[0]
                     , _activeDirectoryHelper.GetIpAddress(system_name, UserName).ToString(), system_name, "Unauthorized");
 
                 return Unauthorized();
@@ -58,6 +58,7 @@ namespace SingleSignOnAPI.Controllers
                     }).FirstOrDefault();
 
                 var addObj = await _activeDirectoryHelper.AddUsesToTSql(UserName, ComputerName, ipAddress.ToString(), system_name);
+                //Log.Information($"User: {UserName} | Computer: {ComputerName} | IP: {ipAddress} | System: {system_name} | Login Success");
 
                 return Ok(new
                 {
@@ -67,12 +68,13 @@ namespace SingleSignOnAPI.Controllers
                     FullComputerName,
                     IpAddress = ipAddress.ToString(),
                     UserDetail,
-                    addObj
+                    //addObj
                 });
             }
             catch (Exception ex)
             {
-                _activeDirectoryHelper.LogError(UserName, ComputerName, ipAddress.ToString(),system_name, ex.Message);
+                _activeDirectoryHelper.LogError(UserName, ComputerName, ipAddress.ToString(), system_name, ex.Message);
+                Log.Error($"Error: {ex.Message} | User: {UserName} | Computer: {ComputerName} | IP: {ipAddress} | System: {system_name}");
                 return StatusCode(500, new
                 {
                     status = "500",

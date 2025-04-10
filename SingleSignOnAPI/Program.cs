@@ -1,12 +1,9 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Authentication.Negotiate;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Server.IISIntegration;
-using SingleSignOnAPI;
-using SingleSignOnAPI.AppDbContext;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-using Microsoft.AspNetCore.Authentication.Negotiate;
+using SingleSignOnAPI;
+using SingleSignOnAPI.AppDbContext;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,14 +15,20 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
         builder => builder.WithOrigins("http://localhost:7277",
+                                        "http://localhost:80",
+                                        "http://localhost:888",
                                         "http://hmmta-tpcap",
                                         "http://hmmt-app07",
-                                        "http://hmmt-app05",
+                                        "http://hmmta-app05:90",
+                                        "http://hmmta-app05:91",
                                         "http://hmmt-app03",
+                                        "https://localhost:443",
+                                        "https://hmmtweb01.hinothailand.com",
                                         "https://hinommt.com") // Replace with your client's origin
                           .AllowAnyMethod()
                           .AllowAnyHeader()
                           .AllowCredentials());
+
 });
 
 builder.Services.AddDbContext<WorkFlowContext>(options =>
