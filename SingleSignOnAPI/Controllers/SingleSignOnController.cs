@@ -29,6 +29,7 @@ namespace SingleSignOnAPI.Controllers
         {
             var UserName = User.FindFirst(ClaimTypes.Name)?.Value.ToString().Split("\\")[1];
             var DomainName = User.FindFirst(ClaimTypes.Name)?.Value.ToString().Split("\\")[0];
+
             if (string.IsNullOrEmpty(UserName) || string.IsNullOrEmpty(DomainName))
             {
                 _activeDirectoryHelper.LogError
@@ -44,21 +45,33 @@ namespace SingleSignOnAPI.Controllers
 
             try
             {
-                var UserDetail = _flowContext.Employee.Where(x => x.EmployeeCode == UserName)
-                    .Select(x => new
-                    {
-                        x.EmployeeCode,
-                        x.DepartmentCode,
-                        x.Company,
-                        Title = x.Title == "นาย" ? "Mr." : x.Title == "นาง" ? "Mrs." : "Miss.",
-                        x.Name,
-                        x.Surname,
-                        x.Email,
-                        x.LocationCode
-                    }).FirstOrDefault();
+                //if (isLogin ?? false)
+                //{
+                //    var addObj = await _activeDirectoryHelper.AddUsesToTSql(UserName, ComputerName, ipAddress.ToString(), system_name);
 
-                var addObj = await _activeDirectoryHelper.AddUsesToTSql(UserName, ComputerName, ipAddress.ToString(), system_name);
-                //Log.Information($"User: {UserName} | Computer: {ComputerName} | IP: {ipAddress} | System: {system_name} | Login Success");
+                //    if (addObj != null)
+                //    {
+                //        return Ok(addObj);
+                //    }
+                //    else
+                //    {
+                //        return BadRequest();
+                //    }
+                //}
+                //else
+                //{
+                var UserDetail = _flowContext.Employee.Where(x => x.EmployeeCode == UserName)
+                .Select(x => new
+                {
+                    x.EmployeeCode,
+                    x.DepartmentCode,
+                    x.Company,
+                    Title = x.Title == "นาย" ? "Mr." : x.Title == "นาง" ? "Mrs." : "Miss.",
+                    x.Name,
+                    x.Surname,
+                    x.Email,
+                    x.LocationCode
+                }).FirstOrDefault();
 
                 return Ok(new
                 {
@@ -67,9 +80,9 @@ namespace SingleSignOnAPI.Controllers
                     ComputerName,
                     FullComputerName,
                     IpAddress = ipAddress.ToString(),
-                    UserDetail,
-                    //addObj
+                    UserDetail
                 });
+                //}
             }
             catch (Exception ex)
             {
@@ -83,5 +96,36 @@ namespace SingleSignOnAPI.Controllers
                 });
             }
         }
+
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<IActionResult> LoggedIn(VM_Post_Login obj)
+        {
+            try
+            {
+                var addObj = await _activeDirectoryHelper.AddUsesToTSql(obj.Employee_Code, obj.Computer_Name, obj.Ip_Address, obj.System_Name);
+
+                if (addObj != null)
+                {
+                    return Ok(addObj);
+                }
+                else
+                {
+                    return BadRequest();
+                }
+            }
+            catch (Exception ex)
+            {
+                _activeDirectoryHelper.LogError(obj.Employee_Code, obj.Computer_Name, obj.Ip_Address, obj.System_Name, ex.Message);
+                Log.Error($"Error: {ex.Message} | User: {obj.Employee_Code} | Computer: {obj.Computer_Name} | IP: {obj.Ip_Address} | System: {obj.System_Name}");
+                return StatusCode(500, new
+                {
+                    status = "500",
+                    response = "Internal Server Error",
+                    message = ex.Message
+                });
+            }
+        }
+
     }
 }
