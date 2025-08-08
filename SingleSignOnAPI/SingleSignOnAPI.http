@@ -1,0 +1,10 @@
+﻿@SingleSignOnAPI_HostAddress = https://localhost:5001
+
+@employeeeCode=20234111
+GET {{SingleSignOnAPI_HostAddress}}/api/employeeinfo/[Action]?employeeeCode={{20234007}}
+
+###
+
+GET {{SingleSignOnAPI_HostAddress}}/api/employeeinfo/Get?employeeeCode={{employeeeCode}}
+
+###
