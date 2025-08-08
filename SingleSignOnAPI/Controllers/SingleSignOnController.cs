@@ -45,21 +45,6 @@ namespace SingleSignOnAPI.Controllers
 
             try
             {
-                //if (isLogin ?? false)
-                //{
-                //    var addObj = await _activeDirectoryHelper.AddUsesToTSql(UserName, ComputerName, ipAddress.ToString(), system_name);
-
-                //    if (addObj != null)
-                //    {
-                //        return Ok(addObj);
-                //    }
-                //    else
-                //    {
-                //        return BadRequest();
-                //    }
-                //}
-                //else
-                //{
                 var UserDetail = _flowContext.Employee.Where(x => x.EmployeeCode == UserName)
                 .Select(x => new
                 {
@@ -72,6 +57,19 @@ namespace SingleSignOnAPI.Controllers
                     x.Email,
                     x.LocationCode
                 }).FirstOrDefault();
+
+                var _userDetailPoom = _flowContext.HinoPersonData.Where(x=>x.EmpCode == UserName)
+                    .Select(x => new
+                    {
+                        EmployeeCode = x.EmpCode,
+                        DepartmentCode = x.UnitCodeCode,
+                        Title = x.PrefixName2,
+                        Name = x.FirstName2,
+                        Surname = x.LastName2,
+                        Email = x.Email,
+                        LocationCode = x.OfficeCode
+
+                    }).FirstOrDefault();
 
                 return Ok(new
                 {
@@ -88,6 +86,25 @@ namespace SingleSignOnAPI.Controllers
             {
                 _activeDirectoryHelper.LogError(UserName, ComputerName, ipAddress.ToString(), system_name, ex.Message);
                 Log.Error($"Error: {ex.Message} | User: {UserName} | Computer: {ComputerName} | IP: {ipAddress} | System: {system_name}");
+                return StatusCode(500, new
+                {
+                    status = "500",
+                    response = "Internal Server Error",
+                    message = ex.Message
+                });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetEmployeeName(string EmployeeCode)
+        {
+            try
+            {
+                return Ok("Success");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Error: {ex.Message}");
                 return StatusCode(500, new
                 {
                     status = "500",
