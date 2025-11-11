@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
-using Serilog;
+using Microsoft.EntityFrameworkCore;
 using SingleSignOnAPI.AppDbContext;
+using System.Net;
 using System.Security.Claims;
 //using System.Web.Http.Cors;
 
@@ -25,27 +26,36 @@ namespace SingleSignOnAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetLogin(string system_name)
+        public async Task<IActionResult> GetLogin(string? system_name)
         {
-            var UserName = User.FindFirst(ClaimTypes.Name)?.Value.ToString().Split("\\")[1];
-            var DomainName = User.FindFirst(ClaimTypes.Name)?.Value.ToString().Split("\\")[0];
-
-            if (string.IsNullOrEmpty(UserName) || string.IsNullOrEmpty(DomainName))
-            {
-                _activeDirectoryHelper.LogError
-                    (UserName, _activeDirectoryHelper.GetHostNameByIp(system_name, UserName).Split(".")[0]
-                    , _activeDirectoryHelper.GetIpAddress(system_name, UserName).ToString(), system_name, "Unauthorized");
-
-                return Unauthorized();
-            }
-
-            var ipAddress = _activeDirectoryHelper.GetIpAddress(system_name, UserName);
-            var ComputerName = _activeDirectoryHelper.GetHostNameByIp(system_name, UserName).Split(".")[0];
-            var FullComputerName = _activeDirectoryHelper.GetHostNameByIp(system_name, UserName);
-
+            string? UserName = null;
+            string? DomainName = null;
+            string? ComputerName = null;
+            IPAddress? ipAddress = null;
             try
             {
-                var UserDetail = _flowContext.Employee.Where(x => x.EmployeeCode == UserName)
+                UserName = User.FindFirstValue(ClaimTypes.Name)?.ToString().Split("\\")[1];
+                DomainName = User.FindFirstValue(ClaimTypes.Name)?.ToString().Split("\\")[0];
+                ComputerName = UserName;
+                if (string.IsNullOrEmpty(UserName) || string.IsNullOrEmpty(DomainName))
+                {
+                    _activeDirectoryHelper.LogError
+                        (UserName, _activeDirectoryHelper.GetHostNameByIp(system_name, UserName).Split(".")[0]
+                        , _activeDirectoryHelper.GetIpAddress(system_name, UserName).ToString(), system_name, "Unauthorized");
+
+                    return Unauthorized();
+                }
+
+                ipAddress = _activeDirectoryHelper.GetIpAddress(system_name, UserName);
+                var FullComputerName = _activeDirectoryHelper.GetHostNameByIp(system_name, UserName);
+            
+                if (string.IsNullOrWhiteSpace(FullComputerName))
+                {
+                    FullComputerName = UserName;
+                }
+                else ComputerName = FullComputerName.Split(".")[0];
+          
+                var UserDetail = await _flowContext.Employee.Where(x => x.EmployeeCode == UserName)
                 .Select(x => new
                 {
                     x.EmployeeCode,
@@ -56,20 +66,7 @@ namespace SingleSignOnAPI.Controllers
                     x.Surname,
                     x.Email,
                     x.LocationCode
-                }).FirstOrDefault();
-
-                var _userDetailPoom = _flowContext.HinoPersonData.Where(x=>x.EmpCode == UserName)
-                    .Select(x => new
-                    {
-                        EmployeeCode = x.EmpCode,
-                        DepartmentCode = x.UnitCodeCode,
-                        Title = x.PrefixName2,
-                        Name = x.FirstName2,
-                        Surname = x.LastName2,
-                        Email = x.Email,
-                        LocationCode = x.OfficeCode
-
-                    }).FirstOrDefault();
+                }).FirstOrDefaultAsync();
 
                 return Ok(new
                 {
@@ -84,27 +81,8 @@ namespace SingleSignOnAPI.Controllers
             }
             catch (Exception ex)
             {
-                _activeDirectoryHelper.LogError(UserName, ComputerName, ipAddress.ToString(), system_name, ex.Message);
-                Log.Error($"Error: {ex.Message} | User: {UserName} | Computer: {ComputerName} | IP: {ipAddress} | System: {system_name}");
-                return StatusCode(500, new
-                {
-                    status = "500",
-                    response = "Internal Server Error",
-                    message = ex.Message
-                });
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetEmployeeName(string EmployeeCode)
-        {
-            try
-            {
-                return Ok("Success");
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"Error: {ex.Message}");
+                _activeDirectoryHelper.LogError(UserName, ComputerName, ipAddress.ToString(), system_name, ex.InnerException.Message ?? ex.Message);
+                //Log.Error($"Error: {ex.Message} | User: {UserName} | Computer: {ComputerName} | IP: {ipAddress} | System: {system_name}");
                 return StatusCode(500, new
                 {
                     status = "500",
@@ -133,8 +111,8 @@ namespace SingleSignOnAPI.Controllers
             }
             catch (Exception ex)
             {
-                _activeDirectoryHelper.LogError(obj.Employee_Code, obj.Computer_Name, obj.Ip_Address, obj.System_Name, ex.Message);
-                Log.Error($"Error: {ex.Message} | User: {obj.Employee_Code} | Computer: {obj.Computer_Name} | IP: {obj.Ip_Address} | System: {obj.System_Name}");
+                _activeDirectoryHelper.LogError(obj.Employee_Code, obj.Computer_Name, obj.Ip_Address, obj.System_Name, ex.InnerException.Message ?? ex.Message);
+                //Log.Error($"Error: {ex.Message} | User: {obj.Employee_Code} | Computer: {obj.Computer_Name} | IP: {obj.Ip_Address} | System: {obj.System_Name}");
                 return StatusCode(500, new
                 {
                     status = "500",
@@ -143,6 +121,38 @@ namespace SingleSignOnAPI.Controllers
                 });
             }
         }
+
+        //[HttpPost]
+        //[AllowAnonymous]
+        //public async Task<IActionResult> GenerateUserDetail(VM_CmdPostData obj)
+        //{
+        //    try
+        //    {
+        //        var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "HostNameList");
+        //        if (!Directory.Exists(folderPath))
+        //        {
+        //            Directory.CreateDirectory(folderPath);
+        //        }
+
+        //        var fileName = $"{obj.userName}.json";
+        //        var filePath = Path.Combine(folderPath, fileName);
+        //        var json = JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
+        //        await System.IO.File.WriteAllTextAsync(filePath, json);
+
+        //        return Ok(new { Status = "Saved", File = fileName });
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Log.Error($"Error: {ex.Message} | User: {obj.userName} | Computer: {obj.hostName}");
+        //        return StatusCode(500, new
+        //        {
+        //            status = "500",
+        //            response = "Internal Server Error",
+        //            message = ex.Message
+        //        });
+        //    }
+        //}
 
     }
 }

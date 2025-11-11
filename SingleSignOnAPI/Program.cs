@@ -14,20 +14,24 @@ builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme).AddNe
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
-        builder => builder.WithOrigins("http://localhost:7277",
-                                        "http://localhost:80",
-                                        "http://localhost:888",
-                                        "http://hmmta-tpcap",
-                                        "http://hmmt-app07",
-                                        "http://hmmta-app05:90",
-                                        "http://hmmta-app05:91",
-                                        "http://hmmt-app03",
-                                        "https://localhost:443",
-                                        "https://hmmtweb01.hinothailand.com",
-                                        "https://hinommt.com") // Replace with your client's origin
-                          .AllowAnyMethod()
-                          .AllowAnyHeader()
-                          .AllowCredentials());
+        builder => builder.WithOrigins
+        (
+            "http://localhost:7277",
+            "http://localhost:80",
+            "http://localhost:888",
+            "http://hmmta-tpcap",
+            "http://hmmt-app07",
+            "http://hmmta-app05:90",
+            "http://hmmta-app05:91",
+            "http://hmmt-app03",
+            "https://localhost:443",
+            "https://hmmtweb01.hinothailand.com",
+            "https://hinommt.com"
+        ) // Replace with your client's origin
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .AllowCredentials()
+    );
 
 });
 
