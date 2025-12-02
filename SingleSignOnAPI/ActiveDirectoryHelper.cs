@@ -42,10 +42,17 @@ namespace SingleSignOnAPI
             {
                 var _xForward = _httpContextAccessor.HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault() ?? _httpContextAccessor.HttpContext.Connection.RemoteIpAddress?.ToString();
                 ipAddress = IPAddress.Parse(_xForward);
-                hostName = Dns.GetHostEntry(ipAddress).HostName;
+                //var clientHostname = ipAddress != null ? Dns.GetHostEntry(ipAddress).HostName : "";
+                var entry = System.Net.Dns.GetHostEntry(ipAddress);
                 logMessage.IP_Address = ipAddress.ToString();
                 logMessage.Device = hostName;
-                return hostName;
+                return entry?.HostName ?? string.Empty;
+                //return hostName;
+            }
+            catch (System.Net.Sockets.SocketException)
+            {
+                return string.Empty;
+
             }
             catch (Exception ex)
             {
