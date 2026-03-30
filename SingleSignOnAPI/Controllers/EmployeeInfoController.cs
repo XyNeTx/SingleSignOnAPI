@@ -70,6 +70,49 @@ namespace SingleSignOnAPI.Controllers
             }
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            try
+            {
+                //var employeeInfo = new IEnumerable<EmployeeInfo>;
+                var employeeInfo = _workFlowContext.EmployeeInfo
+                    .FromSqlRaw($"SELECT Emp.EmployeeCode," +
+                    $" Emp.DepartmentCode," +
+                    $" Dep.DepartmentName," +
+                    $" Emp.Name," +
+                    $" Emp.Surname," +
+                    $" Emp.Email," +
+                    $" Position.PositionName," +
+                    $" Position.PositionShortName," +
+                    $" Dep.Initial" +
+                    $" FROM [Organize].[Employee] Emp" +
+                    $" INNER JOIN [WorkFlow].[Organize].[Position] Position " +
+                    $" ON Emp.PositionCode = Position.PositionCode " +
+                    $" INNER JOIN [WorkFlow].[Organize].[Department] Dep " +
+                    $" ON Emp.DepartmentCode = Dep.DepartmentCode " +
+                    $" AND Emp.Company = Dep.Company")
+                    //$" WHERE Emp.EmployeeCode = '{employeeeCode}'")
+                    .AsEnumerable();
+
+                if (employeeInfo == null)
+                {
+                    return NotFound(new
+                    {
+                        message = "The employee not found."
+                    });
+                }
+                return Ok(new
+                {
+                    employeeInfo
+                });
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
     }
 
 }

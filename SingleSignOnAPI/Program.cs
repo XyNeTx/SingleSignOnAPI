@@ -26,7 +26,8 @@ builder.Services.AddCors(options =>
             "http://hmmt-app03",
             "https://localhost:443",
             "https://hmmtweb01.hinothailand.com",
-            "https://hinommt.com"
+            "https://hinommt.com",
+            "https://make.powerapps.com"
         ) // Replace with your client's origin
         .AllowAnyMethod()
         .AllowAnyHeader()
